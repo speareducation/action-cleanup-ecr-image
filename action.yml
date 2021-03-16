@@ -44,5 +44,5 @@ runs:
         export APP_ENV="$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/\(.*\)/.*$%\1%g")"
         ECR_IMAGE_NAME="$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/${APP_ENV}/%${APP_ENV}-%g")"
         echo "Cleaning up release ${ECR_IMAGE_NAME}"
-        aws ecr batch-delete-image --repository-name "${ECR_REPO}" --image-ids "${ECR_IMAGE_NAME}"
+        aws ecr batch-delete-image --repository-name "${ECR_REPO}" --image-ids "imageTag=${ECR_IMAGE_NAME}"
         echo "::set-output name=image::${ECR_REGISTRY}/${ECR_REPO}:${ECR_IMAGE_NAME}"

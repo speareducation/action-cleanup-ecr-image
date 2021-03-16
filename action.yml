@@ -1,0 +1,42 @@
+---
+name: "Cleanup ECR Image for Branch"
+author: "Kenzi Stewart <kstewart@speareducation.com>"
+description: "Checks that the application code is compatible with the specified PHP version"
+inputs:
+  git-ref:
+    description: "Git branch or tag that corresponds with the ECR image"
+    required: true
+  aws-access-key-id:
+    description: Amazon Access Key with permission to modify the ECR repository
+    required: true
+  aws-secret-access-key:
+    description: Amazon Secret Access Key
+    required: true
+  aws-session-token:
+    description: AWS Session token (if applicable)
+    required: false
+  aws-region:
+    description: Region of AWS ECR repository
+    required: false
+    default: us-east-1
+runs:
+  using: 'composite'
+  steps:
+    - name: "Configure ECS Credentials"
+      run: |
+        export AWS_ACCESS_KEY_ID="${{ inputs.aws-access-key-id }}"
+        export AWS_SECRET_ACCESS_KEY="${{ inputs.aws-secret-access-key }}"
+        if [[ -n "${{ inputs.aws-session-token }}" ]]; then
+          export AWS_SESSION_TOKEN="${{ inputs.aws-session-token }}"
+        fi
+        export AWS_REGION="${{ inputs.aws-region }}"
+    - name: "Convert git branch to ECR tag"
+      run: |
+        export GITHUB_EVENT_REF=${{ inputs.git-ref }}
+        export APP_ENV=$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/\(.*\)/.*$%\1%g"
+        RELEASE=$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/${APP_ENV}/%${APP_ENV}-%g")
+    - name: "Remove tag from ECR"
+        echo "Cleaning up release ${RELEASE}"
+        aws ecr batch-delete-image --repository-name "${ECR_REPO}" --image-ids "${APP_ENV}-${RELEASE}"
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPO:$APP_ENV-$RELEASE"
+

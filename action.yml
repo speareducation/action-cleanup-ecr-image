@@ -23,6 +23,7 @@ runs:
   using: 'composite'
   steps:
     - name: "Configure ECS Credentials"
+      shell: bash
       run: |
         export AWS_ACCESS_KEY_ID="${{ inputs.aws-access-key-id }}"
         export AWS_SECRET_ACCESS_KEY="${{ inputs.aws-secret-access-key }}"
@@ -31,12 +32,14 @@ runs:
         fi
         export AWS_REGION="${{ inputs.aws-region }}"
     - name: "Convert git branch to ECR tag"
+      shell: bash
       run: |
         export GITHUB_EVENT_REF=${{ inputs.git-ref }}
         export APP_ENV=$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/\(.*\)/.*$%\1%g"
         RELEASE=$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/${APP_ENV}/%${APP_ENV}-%g")
     - name: "Remove tag from ECR"
+      shell: bash
+      run: |
         echo "Cleaning up release ${RELEASE}"
         aws ecr batch-delete-image --repository-name "${ECR_REPO}" --image-ids "${APP_ENV}-${RELEASE}"
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPO:$APP_ENV-$RELEASE"
-

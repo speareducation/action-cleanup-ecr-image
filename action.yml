@@ -40,7 +40,7 @@ runs:
         fi
         export AWS_REGION="${{ inputs.aws-region }}"
         GITHUB_EVENT_REF="${{ inputs.git-ref }}"
-        ECR_REGISTRY="${{ inputs.ecr-registry }}"
+        export ECR_REGISTRY=$(echo "${{ inputs.ecr-registry }}" | sed -e 's/\..*$//g')
         APP_ENV="$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/\(.*\)/.*$%\1%g")"
         ECR_IMAGE_NAME="$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/${APP_ENV}/%${APP_ENV}-%g")"
         ECR_REPO="${{ inputs.ecr-repo }}"

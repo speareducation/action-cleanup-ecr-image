@@ -35,7 +35,7 @@ runs:
       shell: bash
       run: |
         export GITHUB_EVENT_REF=${{ inputs.git-ref }}
-        export APP_ENV=$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/\(.*\)/.*$%\1%g"
+        export APP_ENV=$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/\(.*\)/.*$%\1%g")
         RELEASE=$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/${APP_ENV}/%${APP_ENV}-%g")
     - name: "Remove tag from ECR"
       shell: bash

@@ -6,21 +6,8 @@ inputs:
   git-ref:
     description: "Git branch or tag that corresponds with the ECR image"
     required: true
-  aws-access-key-id:
-    description: Amazon Access Key with permission to modify the ECR repository
-    required: true
-  aws-secret-access-key:
-    description: Amazon Secret Access Key
-    required: true
-  aws-session-token:
-    description: AWS Session token (if applicable)
-    required: false
-  aws-region:
-    description: Region of AWS ECR repository
-    required: false
-    default: us-east-1
   ecr-registry:
-    description: 12-digit ID of ECR registry
+    description: 12-digit ID of ECR registry, or the entire registry URL
     required: true
   ecr-repo:
     description: Name of ECR repository to act upon
@@ -32,18 +19,12 @@ runs:
     - name: "Cleanup ECR tag"
       shell: bash
       run: |
-        set -x
-        export AWS_ACCESS_KEY_ID="${{ inputs.aws-access-key-id }}"
-        export AWS_SECRET_ACCESS_KEY="${{ inputs.aws-secret-access-key }}"
-        if [[ -n "${{ inputs.aws-session-token }}" ]]; then
-          export AWS_SESSION_TOKEN="${{ inputs.aws-session-token }}"
-        fi
-        export AWS_REGION="${{ inputs.aws-region }}"
-        GITHUB_EVENT_REF="${{ inputs.git-ref }}"
-        export ECR_REGISTRY=$(echo "${{ inputs.ecr-registry }}" | sed -e 's/\..*$//g')
-        APP_ENV="$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/\(.*\)/.*$%\1%g")"
-        ECR_IMAGE_NAME="$(echo "${GITHUB_EVENT_REF}" | sed -e "s%releases/${APP_ENV}/%${APP_ENV}-%g")"
-        ECR_REPO="${{ inputs.ecr-repo }}"
+        ECR_REGISTRY_ID=$(echo "${{ inputs.ecr-registry }}" | sed -e 's/\..*$//g')
+        APP_ENV="$(echo "${{ inputs.git-ref }}" | sed -e "s%releases/\(.*\)/.*$%\1%g")"
+        ECR_IMAGE_NAME="$(echo "${{ inputs.git-ref }}" | sed -e "s%releases/${APP_ENV}/%${APP_ENV}-%g")"
         echo "Cleaning up release ${ECR_IMAGE_NAME}"
-        aws ecr batch-delete-image --registry-id "${ECR_REGISTRY}" --repository-name "${ECR_REPO}" --image-ids "imageTag=${ECR_IMAGE_NAME}"
-        echo "::set-output name=image::${ECR_REGISTRY}/${ECR_REPO}:${ECR_IMAGE_NAME}"
+        aws ecr batch-delete-image \
+          --registry-id "${ECR_REGISTRY_ID}" \
+          --repository-name "${{ inputs.ecr-repo }}" \
+          --image-ids "imageTag=${ECR_IMAGE_NAME}"
+
